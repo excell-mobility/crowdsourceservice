@@ -35,8 +35,8 @@ public class Application {
           .build()
           .genericModelSubstitutes(ResponseEntity.class)
           //.protocols(Sets.newHashSet("https"))
-          .host("localhost:44445")
-//          .host("141.64.5.234/excell-crowdsource-api")
+//          .host("localhost:44445")
+          .host("141.64.5.234/excell-crowdsource-api")
           .apiInfo(apiInfo())
           ;
     }
