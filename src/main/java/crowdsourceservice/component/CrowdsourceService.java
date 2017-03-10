@@ -2,6 +2,7 @@ package crowdsourceservice.component;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import org.geotools.geometry.jts.JTS;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Maps;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.LocationIndexMatch;
@@ -85,11 +87,23 @@ public class CrowdsourceService {
 		List<EdgeMatch> matches = mr.getEdgeMatches();
 	
 		PointList pointList = new PointList();
+		Map<GPXEntry, Integer> wayToEdgeMapping = Maps.newHashMap();
 		
 		for(int index = 0; index < matches.size(); index++) {
 			
-			pointList.add(matches.get(index).getEdgeState().fetchWayGeometry(3));
+			PointList fetchWayGeometry = matches.get(index).getEdgeState().fetchWayGeometry(3);
+			pointList.add(fetchWayGeometry);
+			int edgeId = matches.get(index).getEdgeState().getEdge();
 			
+			// extract the edge id and save for later extraction
+			for(int pointIndex = 0; pointIndex < fetchWayGeometry.size(); pointIndex++) {
+				wayToEdgeMapping.put(
+						new GPXEntry(fetchWayGeometry.getLat(pointIndex), 
+								fetchWayGeometry.getLon(pointIndex), 
+								0l), 
+								edgeId);
+			}
+	
 		}
 		
 		TreeMap<Double, GPXEntry> sortedMap = new TreeMap<Double, GPXEntry>();
@@ -111,11 +125,16 @@ public class CrowdsourceService {
 			
 		}
 		GPXEntry gpxEntry = sortedMap.get(sortedMap.firstKey());
+		int edgeId  = 0;
+		if(wayToEdgeMapping.containsKey(gpxEntry)) {
+			edgeId = wayToEdgeMapping.get(gpxEntry);
+		}
 		
 		return new CrowdsourceServiceResponse(traffic_event, 
 				pointOfTrafficAlert.getTime(),
 				gpxEntry.getLon(),
-				gpxEntry.getLat());
+				gpxEntry.getLat(),
+				edgeId);
 	}
 	
 	private double getDistance(double first_lat, double first_lon, 

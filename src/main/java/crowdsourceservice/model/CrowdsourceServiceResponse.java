@@ -8,14 +8,16 @@ public class CrowdsourceServiceResponse {
 	private double lon;
 	private String traffic_event;
 	private long timestamp;
+	private int edgeId;
 
 	public CrowdsourceServiceResponse(String traffic_event, long time,
-			double lon, double lat) {
+			double lon, double lat, int edgeId) {
 		
 		this.lat = lat;
 		this.lon = lon;
 		this.traffic_event = traffic_event;
 		this.timestamp = time;
+		this.edgeId = edgeId;
 		
 	}
 
@@ -53,6 +55,15 @@ public class CrowdsourceServiceResponse {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	@ApiModelProperty(dataType = "int")
+	public int getEdgeId() {
+		return edgeId;
+	}
+
+	public void setEdgeId(int edgeId) {
+		this.edgeId = edgeId;
 	}
 
 }
