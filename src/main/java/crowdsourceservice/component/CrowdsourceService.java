@@ -1,10 +1,13 @@
 package crowdsourceservice.component;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.geojson.Feature;
+import org.geojson.Point;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.GeodeticCalculator;
@@ -20,6 +23,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import rest.CrowdsourceEventConnector;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.matching.EdgeMatch;
@@ -34,14 +41,13 @@ import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.PointList;
 import com.vividsolutions.jts.geom.Coordinate;
 
-import crowdsourceservice.model.CrowdsourceServiceResponse;
-
 @Component
 public class CrowdsourceService {
 	
 	private final Logger log;
 	private GraphHopper hopper;
 	private CarFlagEncoder encoder;
+	private CrowdsourceEventConnector crowdsourceConnector;
 	
 	@Autowired
 	public CrowdsourceService(
@@ -50,6 +56,7 @@ public class CrowdsourceService {
 		
 		log = LoggerFactory.getLogger(this.getClass());
 		hopper = new GraphHopper().forServer();
+		crowdsourceConnector = new CrowdsourceEventConnector();
 		hopper.setOSMFile(osmFile);
 		hopper.setGraphHopperLocation(ghLocation);
 		encoder = new CarFlagEncoder();
@@ -59,7 +66,7 @@ public class CrowdsourceService {
 		
 	}
 	
-	public CrowdsourceServiceResponse mapPositionofTrafficEvent (JSONObject jsonObject) {
+	public String mapPositionofTrafficEvent (JSONObject jsonObject) {
 				
 		JSONArray jsonArray = jsonObject.getJSONArray("coordinates");
 		String traffic_event = jsonObject.getString("traffic-event");
@@ -130,11 +137,24 @@ public class CrowdsourceService {
 			edgeId = wayToEdgeMapping.get(gpxEntry);
 		}
 		
-		return new CrowdsourceServiceResponse(traffic_event, 
-				pointOfTrafficAlert.getTime(),
-				gpxEntry.getLon(),
-				gpxEntry.getLat(),
-				edgeId);
+		Feature geojsonResult = new Feature();
+		geojsonResult.setGeometry(new Point(gpxEntry.getLon(), gpxEntry.getLat()));  
+		geojsonResult.setProperty("event-type", traffic_event);
+		geojsonResult.setProperty("time", pointOfTrafficAlert.getTime());
+		geojsonResult.setProperty("gh_edge", edgeId);
+
+		String writeValueAsString = null;
+		try {
+			writeValueAsString = new ObjectMapper().writeValueAsString(geojsonResult);
+			crowdsourceConnector.transferGeoJSON(writeValueAsString);
+		} catch (JsonProcessingException e) {
+			log.error("Can not convert to json");
+		} catch (IOException e) {
+			log.error("Can not transfer geo json", e);
+		}
+		
+		return writeValueAsString;
+		
 	}
 	
 	private double getDistance(double first_lat, double first_lon, 
