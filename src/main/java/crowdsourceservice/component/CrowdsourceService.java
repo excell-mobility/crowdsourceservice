@@ -95,12 +95,14 @@ public class CrowdsourceService {
 	
 		PointList pointList = new PointList();
 		Map<GPXEntry, Integer> wayToEdgeMapping = Maps.newHashMap();
+		Map<GPXEntry, String> wayToStreetMapping = Maps.newHashMap();
 		
 		for(int index = 0; index < matches.size(); index++) {
 			
 			PointList fetchWayGeometry = matches.get(index).getEdgeState().fetchWayGeometry(3);
 			pointList.add(fetchWayGeometry);
 			int edgeId = matches.get(index).getEdgeState().getEdge();
+			String streetName = matches.get(index).getEdgeState().getName();
 			
 			// extract the edge id and save for later extraction
 			for(int pointIndex = 0; pointIndex < fetchWayGeometry.size(); pointIndex++) {
@@ -109,6 +111,11 @@ public class CrowdsourceService {
 								fetchWayGeometry.getLon(pointIndex), 
 								0l), 
 								edgeId);
+				wayToStreetMapping.put(
+						new GPXEntry(fetchWayGeometry.getLat(pointIndex), 
+								fetchWayGeometry.getLon(pointIndex), 
+								0l), 
+								streetName);
 			}
 	
 		}
@@ -133,8 +140,12 @@ public class CrowdsourceService {
 		}
 		GPXEntry gpxEntry = sortedMap.get(sortedMap.firstKey());
 		int edgeId  = 0;
+		String streetname = null;
 		if(wayToEdgeMapping.containsKey(gpxEntry)) {
 			edgeId = wayToEdgeMapping.get(gpxEntry);
+		}
+		if(wayToStreetMapping.containsKey(gpxEntry)) {
+			streetname = wayToStreetMapping.get(gpxEntry);
 		}
 		
 		Feature geojsonResult = new Feature();
@@ -142,6 +153,7 @@ public class CrowdsourceService {
 		geojsonResult.setProperty("event-type", traffic_event);
 		geojsonResult.setProperty("time", pointOfTrafficAlert.getTime());
 		geojsonResult.setProperty("gh_edge", edgeId);
+		geojsonResult.setProperty("streetname", streetname);
 
 		String writeValueAsString = null;
 		try {
