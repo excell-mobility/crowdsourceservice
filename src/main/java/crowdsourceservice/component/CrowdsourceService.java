@@ -70,6 +70,7 @@ public class CrowdsourceService {
 				
 		JSONArray jsonArray = jsonObject.getJSONArray("coordinates");
 		String traffic_event = jsonObject.getString("traffic-event");
+		boolean isTest = jsonObject.has("testing");
 		List<GPXEntry> inputGPXEntries = new LinkedList<GPXEntry>();
 		
 		for(int index = 0; index < jsonArray.length(); index++) {
@@ -158,7 +159,9 @@ public class CrowdsourceService {
 		String writeValueAsString = null;
 		try {
 			writeValueAsString = new ObjectMapper().writeValueAsString(geojsonResult);
-			crowdsourceConnector.transferGeoJSON(writeValueAsString);
+			if(!isTest) {
+				crowdsourceConnector.transferGeoJSON(writeValueAsString);
+			}
 		} catch (JsonProcessingException e) {
 			log.error("Can not convert to json");
 		} catch (IOException e) {
