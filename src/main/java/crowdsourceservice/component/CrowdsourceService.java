@@ -151,7 +151,7 @@ public class CrowdsourceService {
 		
 		Feature geojsonResult = new Feature();
 		geojsonResult.setGeometry(new Point(gpxEntry.getLon(), gpxEntry.getLat()));  
-		geojsonResult.setProperty("event-type", traffic_event);
+		geojsonResult.setProperty("event_type", traffic_event);
 		geojsonResult.setProperty("time", pointOfTrafficAlert.getTime());
 		geojsonResult.setProperty("gh_edge", edgeId);
 		geojsonResult.setProperty("streetname", streetname);
