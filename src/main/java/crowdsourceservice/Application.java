@@ -36,7 +36,7 @@ public class Application {
           .genericModelSubstitutes(ResponseEntity.class)
           //.protocols(Sets.newHashSet("https"))
 //          .host("localhost:44445")
-          .host("excell.vkm.tu-dresden.de:20080/excell-crowdsource-api")
+          .host("excell.vkw.tu-dresden.de:20080/excell-crowdsource-api")
           .apiInfo(apiInfo())
           ;
     }
